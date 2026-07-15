@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { analisarConversa } from '@/lib/claude';
 import { getSupabase } from '@/lib/supabase';
+import { extractContato } from '@/lib/contato';
 import { AnaliseJson } from '@/lib/types';
 
 export default async function handler(
@@ -20,9 +21,9 @@ export default async function handler(
       });
     }
 
-    const supabase = getSupabase(); // inicializa aqui, em runtime
+    const supabase = getSupabase();
 
-    // 1. Chamar Claude API
+    // 1. Chamar Claude API (análise + extração de nome/datas)
     console.log('Analisando conversa com Claude...');
     const analiseJson = await analisarConversa(conversa);
 
@@ -32,12 +33,15 @@ export default async function handler(
       });
     }
 
-    // 2. Gerar ID da análise
+    // 2. Extrair contato via regex (determinístico, não depende da IA)
+    //    Fallback: usa o que o Claude sugeriu, e por último "semcontato"
+    const contato = extractContato(conversa) || analiseJson.contato || 'semcontato';
+
+    // 3. Gerar ID da análise (baseado no contato normalizado)
     const dataParte = new Date().toISOString().substring(0, 10).replace(/-/g, '');
-    const contato = analiseJson.contato || 'semcontato';
     const analiseId = `evt_loppifest_${dataParte}_${contato}`;
 
-    // 3. Salvar arquivo .txt no Storage
+    // 4. Salvar arquivo .txt no Storage
     const nomeArquivo = `${analiseId}.txt`;
     const { error: uploadError } = await supabase.storage
       .from('conversas')
@@ -50,10 +54,10 @@ export default async function handler(
       // Continuar mesmo se falhar (não é crítico)
     }
 
-    // 4. Salvar análise no banco
+    // 5. Salvar análise no banco
     const docAnalise = {
       id: analiseId,
-      contato: analiseJson.contato || '',
+      contato,
       cliente_nome: analiseJson.cliente_nome || '',
       data_conversa_inicio: analiseJson.data_conversa_inicio,
       data_ultima_mensagem: analiseJson.data_ultima_mensagem,
@@ -84,7 +88,7 @@ export default async function handler(
     return res.status(201).json({
       sucesso: true,
       analise_id: analiseId,
-      contato: analiseJson.contato,
+      contato,
       cliente_nome: analiseJson.cliente_nome,
       sentimento: analiseJson.sentimento,
     });
