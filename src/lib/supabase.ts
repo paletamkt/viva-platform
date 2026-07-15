@@ -75,7 +75,7 @@ export async function getClientesPorContato() {
     const supabase = getSupabase();
     const { data, error } = await supabase
       .from('analises')
-      .select('contato, cliente_nome, data_upload, sentimento_score')
+      .select('*')
       .order('data_upload', { ascending: false });
 
     if (error) throw error;
