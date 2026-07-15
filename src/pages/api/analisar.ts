@@ -4,6 +4,7 @@ import { getSupabase } from '@/lib/supabase';
 import { extractContato } from '@/lib/contato';
 import { hashConversa } from '@/lib/hash';
 import { normalizeAnalise } from '@/lib/normalizeAnalise';
+import { getEmpresaAtivaId } from '@/lib/empresa';
 import { AnaliseJson } from '@/lib/types';
 
 export default async function handler(
@@ -24,6 +25,7 @@ export default async function handler(
     }
 
     const supabase = getSupabase();
+    const empresaId = getEmpresaAtivaId();
 
     // 1. Chamar Claude API (análise + extração de nome/datas)
     console.log('Analisando conversa com Claude...');
@@ -42,12 +44,12 @@ export default async function handler(
     //    Fallback: usa o que o Claude sugeriu, e por último "semcontato"
     const contato = extractContato(conversa) || analiseJson.contato || 'semcontato';
 
-    // 3. Gerar ID da análise (contato + data + hash do conteúdo)
+    // 3. Gerar ID da análise (empresa + data + contato + hash do conteúdo)
     //    O hash garante que só um reenvio do MESMO texto seja tratado
     //    como duplicata — qualquer edição no conteúdo gera um ID novo.
     const dataParte = new Date().toISOString().substring(0, 10).replace(/-/g, '');
     const hash = hashConversa(conversa);
-    const analiseId = `evt_loppifest_${dataParte}_${contato}_${hash}`;
+    const analiseId = `evt_${empresaId}_${dataParte}_${contato}_${hash}`;
 
     // 4. Checar se essa mesma análise já existe (evita duplicata por reenvio idêntico)
     const { data: existente } = await supabase
@@ -94,7 +96,7 @@ export default async function handler(
       status: 'confirmado',
       criado_por: 'api',
       criado_em: new Date().toISOString(),
-      cliente_id: 'loppifest',
+      cliente_id: empresaId,
     };
 
     const { data, error } = await supabase
