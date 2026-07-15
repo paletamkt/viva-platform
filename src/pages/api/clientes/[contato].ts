@@ -21,9 +21,8 @@ export default async function handler(
 
       const supabase = getSupabase();
 
-      const { error } = await supabase
-        .from('analises')
-        .update({ cliente_nome: cliente_nome.trim() } as any)
+      const { error } = await (supabase.from('analises') as any)
+        .update({ cliente_nome: cliente_nome.trim() })
         .eq('contato', contato);
 
       if (error) {

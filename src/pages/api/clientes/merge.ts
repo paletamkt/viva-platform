@@ -33,8 +33,7 @@ export default async function handler(
       updatePayload.cliente_nome = cliente_nome.trim();
     }
 
-    const { error } = await supabase
-      .from('analises')
+    const { error } = await (supabase.from('analises') as any)
       .update(updatePayload)
       .eq('contato', contatoOrigem);
 
@@ -45,9 +44,8 @@ export default async function handler(
 
     // Se um nome foi definido, aplica também nas análises que já eram do destino
     if (typeof cliente_nome === 'string' && cliente_nome.trim()) {
-      await supabase
-        .from('analises')
-        .update({ cliente_nome: cliente_nome.trim() } as any)
+      await (supabase.from('analises') as any)
+        .update({ cliente_nome: cliente_nome.trim() })
         .eq('contato', contatoDestino);
     }
 
