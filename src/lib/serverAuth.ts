@@ -1,5 +1,5 @@
 import type { NextApiRequest } from 'next';
-import { getSupabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 export interface PerfilAutenticado {
   id: string;
@@ -12,7 +12,9 @@ export interface PerfilAutenticado {
 
 /**
  * Verifica o token enviado pelo cliente (via authFetch) e retorna o
- * perfil correspondente. Retorna null se não houver token válido.
+ * perfil correspondente. Cria um client Supabase "autenticado" com o
+ * token do usuário para que as políticas de RLS (ex: na tabela perfis)
+ * reconheçam corretamente quem está fazendo a consulta.
  */
 export async function verificarAuth(req: NextApiRequest): Promise<PerfilAutenticado | null> {
   const authHeader = req.headers.authorization;
@@ -21,14 +23,19 @@ export async function verificarAuth(req: NextApiRequest): Promise<PerfilAutentic
   }
 
   const token = authHeader.replace('Bearer ', '');
-  const supabase = getSupabase();
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-  const { data: userData, error: userError } = await supabase.auth.getUser(token);
+  const supabaseAutenticado = createClient(url, anonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const { data: userData, error: userError } = await supabaseAutenticado.auth.getUser(token);
   if (userError || !userData.user) {
     return null;
   }
 
-  const { data: perfil, error: perfilError } = await supabase
+  const { data: perfil, error: perfilError } = await supabaseAutenticado
     .from('perfis')
     .select('*')
     .eq('id', userData.user.id)
@@ -44,8 +51,6 @@ export async function verificarAuth(req: NextApiRequest): Promise<PerfilAutentic
 /**
  * Dado o perfil e o header x-empresa-id (empresa que o usuário selecionou
  * na interface), retorna qual empresa deve ser usada para filtrar os dados.
- * - cliente_suporte: sempre a(s) empresa(s) do próprio perfil, ignorando o header.
- * - master/suporte: a empresa escolhida no header, se houver.
  */
 export function resolverEmpresaFiltro(
   perfil: PerfilAutenticado,
@@ -60,6 +65,5 @@ export function resolverEmpresaFiltro(
     return [empresaHeader];
   }
 
-  // Master/Suporte sem empresa selecionada: sem filtro (vê tudo)
   return null;
 }

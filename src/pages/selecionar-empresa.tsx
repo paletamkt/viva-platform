@@ -34,6 +34,11 @@ export default function SelecionarEmpresa() {
     router.push('/');
   }
 
+  function verTodas() {
+    localStorage.removeItem('viva_empresa_selecionada');
+    router.push('/');
+  }
+
   if (carregandoAuth || carregando) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -50,14 +55,21 @@ export default function SelecionarEmpresa() {
         </div>
 
         <h1 className="text-xl font-bold text-gray-900 text-center mb-2">
-          Escolha a empresa
+          Filtrar por empresa
         </h1>
         <p className="text-sm text-gray-500 text-center mb-6">
-          Você tem acesso a mais de uma empresa. Selecione qual deseja visualizar.
+          Veja todas as empresas de uma vez, ou filtre por uma específica.
         </p>
 
+        <button
+          onClick={verTodas}
+          className="w-full text-left border-2 border-red-600 bg-red-50 rounded-lg px-4 py-3 mb-3 hover:bg-red-100 transition"
+        >
+          <p className="font-medium text-red-700">Ver todas as empresas</p>
+        </button>
+
         {empresas.length === 0 ? (
-          <p className="text-center text-gray-500 text-sm">Nenhuma empresa disponível.</p>
+          <p className="text-center text-gray-500 text-sm">Nenhuma empresa cadastrada.</p>
         ) : (
           <div className="space-y-3">
             {empresas.map((empresa) => (

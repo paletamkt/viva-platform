@@ -18,9 +18,8 @@ export default function Home() {
   const [empresas, setEmpresas] = useState<any[]>([]);
   const [prontoParaCarregar, setProntoParaCarregar] = useState(false);
 
-  // Resolve qual empresa está em uso (localStorage para master/suporte,
-  // fixo para cliente_suporte) e decide se precisa mandar para a tela
-  // de seleção de empresa.
+  // Master/Suporte entram por padrão vendo TODAS as empresas (sem filtro).
+  // Cliente-Suporte é sempre restrito à(s) própria(s) empresa(s).
   useEffect(() => {
     if (!perfil) return;
 
@@ -35,24 +34,12 @@ export default function Home() {
       }
 
       const res = await authFetch('/api/empresas');
-      if (!res.ok) {
-        setProntoParaCarregar(true);
-        return;
+      if (res.ok) {
+        const lista = await res.json();
+        setEmpresas(lista);
       }
-      const lista = await res.json();
-      setEmpresas(lista);
-
-      const selecionadaAtual = localStorage.getItem('viva_empresa_selecionada');
-      const aindaValida = lista.some((e: any) => e.id === selecionadaAtual);
-
-      if (selecionadaAtual && aindaValida) {
-        setProntoParaCarregar(true);
-      } else if (lista.length <= 1) {
-        if (lista[0]) localStorage.setItem('viva_empresa_selecionada', lista[0].id);
-        setProntoParaCarregar(true);
-      } else {
-        router.push('/selecionar-empresa');
-      }
+      // Não força seleção nem redireciona — por padrão vê tudo.
+      setProntoParaCarregar(true);
     }
 
     resolverEmpresa();
@@ -109,15 +96,17 @@ export default function Home() {
   }
 
   if (!perfil) {
-    return null; // useAuth já redireciona para /login
+    return null;
   }
 
   const nomeExibicao = perfil.nome || perfil.email;
   const roleLabel = perfil.role === 'master' ? 'Master' : perfil.role === 'suporte' ? 'Suporte' : 'Cliente-Suporte';
   const empresaAtualId = typeof window !== 'undefined' ? localStorage.getItem('viva_empresa_selecionada') : null;
   const empresaAtual = empresas.find((e) => e.id === empresaAtualId);
-  const nomeEmpresa = empresaAtual?.nome || empresaAtualId || '';
-  const podeTrocarEmpresa = perfil.role !== 'cliente_suporte' && empresas.length > 1;
+  const nomeEmpresa = perfil.role === 'cliente_suporte'
+    ? (empresaAtual?.nome || empresaAtualId || '')
+    : (empresaAtualId ? (empresaAtual?.nome || empresaAtualId) : 'Todas as empresas');
+  const podeTrocarEmpresa = perfil.role !== 'cliente_suporte' && empresas.length > 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
@@ -145,7 +134,7 @@ export default function Home() {
                   onClick={() => router.push('/selecionar-empresa')}
                   className="text-red-100 hover:text-white text-sm font-medium border border-red-300 hover:border-white px-3 py-1.5 rounded-lg transition"
                 >
-                  Trocar empresa
+                  Filtrar por empresa
                 </button>
               )}
               {perfil.role === 'master' && (
