@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import AnalisesModal from './AnalisesModal';
 import { Analise } from '@/lib/types';
+import { authFetch } from '@/lib/authFetch';
 
 interface ClientePerfilModalProps {
   cliente: any;
@@ -21,13 +22,11 @@ export default function ClientePerfilModal({
 
   const podeGerenciar = role === 'master' || role === 'suporte';
 
-  // Nome exibido localmente, atualizado após edição sem precisar fechar o modal
   const [nomeAtual, setNomeAtual] = useState<string>(cliente.cliente_nome || '');
   const [editandoNome, setEditandoNome] = useState(false);
   const [nomeInput, setNomeInput] = useState(nomeAtual);
   const [salvandoNome, setSalvandoNome] = useState(false);
 
-  // Mesclagem
   const [mesclando, setMesclando] = useState(false);
   const [targetMerge, setTargetMerge] = useState('');
   const [confirmandoMerge, setConfirmandoMerge] = useState(false);
@@ -49,7 +48,7 @@ export default function ClientePerfilModal({
     if (!nomeInput.trim()) return;
     setSalvandoNome(true);
     try {
-      const res = await fetch(`/api/clientes/${cliente.contato}`, {
+      const res = await authFetch(`/api/clientes/${cliente.contato}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cliente_nome: nomeInput.trim() }),
@@ -72,7 +71,7 @@ export default function ClientePerfilModal({
     if (!targetMerge) return;
     setProcessandoMerge(true);
     try {
-      const res = await fetch('/api/clientes/merge', {
+      const res = await authFetch('/api/clientes/merge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -174,7 +173,6 @@ export default function ClientePerfilModal({
             </button>
           </div>
 
-          {/* Ação de mesclar */}
           {podeGerenciar && outrosClientes.length > 0 && (
             <button
               onClick={() => setMesclando(!mesclando)}
@@ -239,7 +237,6 @@ export default function ClientePerfilModal({
 
         {/* Content */}
         <div className="p-6">
-          {/* Métricas */}
           <section className="mb-8">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Métricas</h3>
             <div className="grid grid-cols-3 gap-4">
@@ -263,7 +260,6 @@ export default function ClientePerfilModal({
             </div>
           </section>
 
-          {/* Histórico */}
           <section>
             <h3 className="text-lg font-bold text-gray-900 mb-4">Histórico de Conversas</h3>
             <div className="space-y-3">
@@ -272,7 +268,6 @@ export default function ClientePerfilModal({
                   key={idx}
                   className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
                 >
-                  {/* Data */}
                   <div className="flex items-center justify-between mb-2">
                     <p className="font-medium text-gray-900">
                       📅{' '}
@@ -290,12 +285,10 @@ export default function ClientePerfilModal({
                     </p>
                   </div>
 
-                  {/* Upload info */}
                   <p className="text-xs text-gray-500 mb-2">
                     Upload: {new Date(conversa.data_upload).toLocaleString('pt-BR')}
                   </p>
 
-                  {/* Sentimento */}
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex gap-1">
                       {[...Array(5)].map((_, i) => (
@@ -309,7 +302,6 @@ export default function ClientePerfilModal({
                     </span>
                   </div>
 
-                  {/* Status */}
                   <div className="flex items-center justify-between">
                     <span
                       className={`text-xs font-medium px-2 py-1 rounded ${

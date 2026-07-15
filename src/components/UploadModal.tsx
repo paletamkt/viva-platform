@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { authFetch } from '@/lib/authFetch';
 
 interface UploadModalProps {
   onClose: () => void;
@@ -51,7 +52,7 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
     setError(null);
 
     try {
-      const response = await fetch('/api/analisar', {
+      const response = await authFetch('/api/analisar', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

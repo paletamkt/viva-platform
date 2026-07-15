@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Analise } from '@/lib/types';
+import { authFetch } from '@/lib/authFetch';
 
 interface AnalisesModalProps {
   analise: Analise;
@@ -45,7 +46,7 @@ export default function AnalisesModal({ analise, onClose, onDeleted, role }: Ana
   async function handleExcluir() {
     setExcluindo(true);
     try {
-      const res = await fetch(`/api/analises/${analise.id}`, {
+      const res = await authFetch(`/api/analises/${analise.id}`, {
         method: 'DELETE',
       });
 

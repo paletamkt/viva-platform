@@ -5,6 +5,7 @@ import { extractContato } from '@/lib/contato';
 import { hashConversa } from '@/lib/hash';
 import { normalizeAnalise } from '@/lib/normalizeAnalise';
 import { getEmpresaAtivaId } from '@/lib/empresa';
+import { verificarAuth } from '@/lib/serverAuth';
 import { AnaliseJson } from '@/lib/types';
 
 export default async function handler(
@@ -13,6 +14,11 @@ export default async function handler(
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ erro: 'Método não permitido' });
+  }
+
+  const perfil = await verificarAuth(req);
+  if (!perfil) {
+    return res.status(401).json({ erro: 'Não autenticado' });
   }
 
   try {
@@ -25,7 +31,18 @@ export default async function handler(
     }
 
     const supabase = getSupabase();
-    const empresaId = getEmpresaAtivaId();
+
+    // Determinar a empresa: cliente_suporte usa a própria; master/suporte usa
+    // a selecionada no header (x-empresa-id), com fallback para a padrão.
+    let empresaId = getEmpresaAtivaId();
+    if (perfil.role === 'cliente_suporte') {
+      empresaId = perfil.empresas?.[0] || empresaId;
+    } else {
+      const empresaHeader = req.headers['x-empresa-id'];
+      if (typeof empresaHeader === 'string' && empresaHeader) {
+        empresaId = empresaHeader;
+      }
+    }
 
     // 0. Buscar contexto da empresa (posicionamento, tom, objeções)
     const contextoEmpresa = await getEmpresa(empresaId);
@@ -44,12 +61,9 @@ export default async function handler(
     const analiseJson = normalizeAnalise(analiseJsonRaw);
 
     // 2. Extrair contato via regex (determinístico, não depende da IA)
-    //    Fallback: usa o que o Claude sugeriu, e por último "semcontato"
     const contato = extractContato(conversa) || analiseJson.contato || 'semcontato';
 
     // 3. Gerar ID da análise (empresa + data + contato + hash do conteúdo)
-    //    O hash garante que só um reenvio do MESMO texto seja tratado
-    //    como duplicata — qualquer edição no conteúdo gera um ID novo.
     const dataParte = new Date().toISOString().substring(0, 10).replace(/-/g, '');
     const hash = hashConversa(conversa);
     const analiseId = `evt_${empresaId}_${dataParte}_${contato}_${hash}`;
@@ -80,7 +94,6 @@ export default async function handler(
 
     if (uploadError) {
       console.error('Erro ao salvar arquivo:', uploadError);
-      // Continuar mesmo se falhar (não é crítico)
     }
 
     // 6. Salvar análise no banco (incluindo snapshot do contexto usado)
@@ -98,7 +111,7 @@ export default async function handler(
       versao_prompt: '2.0.0',
       contexto_snapshot: contextoEmpresa,
       status: 'confirmado',
-      criado_por: 'api',
+      criado_por: perfil.email,
       criado_em: new Date().toISOString(),
       cliente_id: empresaId,
     };

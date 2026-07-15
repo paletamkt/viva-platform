@@ -1,30 +1,75 @@
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { Analise } from '@/lib/types';
 import UploadModal from '@/components/UploadModal';
 import AnalisesGrid from '@/components/AnalisesGrid';
 import ClientesGrid from '@/components/ClientesGrid';
 import { useAuth } from '@/lib/useAuth';
+import { authFetch } from '@/lib/authFetch';
 
 export default function Home() {
+  const router = useRouter();
   const { perfil, carregando: carregandoAuth, logout } = useAuth();
   const [tab, setTab] = useState<'conversas' | 'clientes'>('conversas');
   const [analises, setAnalises] = useState<Analise[]>([]);
   const [clientes, setClientes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [empresas, setEmpresas] = useState<any[]>([]);
+  const [prontoParaCarregar, setProntoParaCarregar] = useState(false);
+
+  // Resolve qual empresa está em uso (localStorage para master/suporte,
+  // fixo para cliente_suporte) e decide se precisa mandar para a tela
+  // de seleção de empresa.
+  useEffect(() => {
+    if (!perfil) return;
+
+    async function resolverEmpresa() {
+      if (perfil!.role === 'cliente_suporte') {
+        const empresaUnica = perfil!.empresas?.[0];
+        if (empresaUnica) {
+          localStorage.setItem('viva_empresa_selecionada', empresaUnica);
+        }
+        setProntoParaCarregar(true);
+        return;
+      }
+
+      const res = await authFetch('/api/empresas');
+      if (!res.ok) {
+        setProntoParaCarregar(true);
+        return;
+      }
+      const lista = await res.json();
+      setEmpresas(lista);
+
+      const selecionadaAtual = localStorage.getItem('viva_empresa_selecionada');
+      const aindaValida = lista.some((e: any) => e.id === selecionadaAtual);
+
+      if (selecionadaAtual && aindaValida) {
+        setProntoParaCarregar(true);
+      } else if (lista.length <= 1) {
+        if (lista[0]) localStorage.setItem('viva_empresa_selecionada', lista[0].id);
+        setProntoParaCarregar(true);
+      } else {
+        router.push('/selecionar-empresa');
+      }
+    }
+
+    resolverEmpresa();
+  }, [perfil]);
 
   useEffect(() => {
-    if (perfil) {
+    if (prontoParaCarregar) {
       loadAll();
     }
-  }, [perfil]);
+  }, [prontoParaCarregar]);
 
   async function loadAll() {
     setLoading(true);
     try {
       const [resAnalises, resClientes] = await Promise.all([
-        fetch('/api/analises'),
-        fetch('/api/clientes'),
+        authFetch('/api/analises'),
+        authFetch('/api/clientes'),
       ]);
 
       if (!resAnalises.ok) throw new Error('Falha ao buscar análises');
@@ -55,7 +100,7 @@ export default function Home() {
       : 0,
   };
 
-  if (carregandoAuth) {
+  if (carregandoAuth || !prontoParaCarregar) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="w-10 h-10 border-4 border-gray-200 border-t-red-600 rounded-full animate-spin" />
@@ -69,21 +114,48 @@ export default function Home() {
 
   const nomeExibicao = perfil.nome || perfil.email;
   const roleLabel = perfil.role === 'master' ? 'Master' : perfil.role === 'suporte' ? 'Suporte' : 'Cliente-Suporte';
+  const empresaAtualId = typeof window !== 'undefined' ? localStorage.getItem('viva_empresa_selecionada') : null;
+  const empresaAtual = empresas.find((e) => e.id === empresaAtualId);
+  const nomeEmpresa = empresaAtual?.nome || empresaAtualId || '';
+  const podeTrocarEmpresa = perfil.role !== 'cliente_suporte' && empresas.length > 1;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
       {/* Header */}
       <header className="bg-gradient-to-r from-red-600 to-red-700 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex justify-between items-center">
-            <div className="bg-white/95 rounded-lg px-4 py-3 inline-block">
-              <img src="/logo.png" alt="VIVA Platform" className="h-12 w-auto" />
+          <div className="flex justify-between items-center flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-white/95 rounded-lg px-4 py-3 inline-block">
+                <img src="/logo.png" alt="VIVA Platform" className="h-12 w-auto" />
+              </div>
+              {nomeEmpresa && (
+                <span className="bg-white/20 text-white text-sm font-medium px-3 py-1.5 rounded-lg border border-white/30">
+                  {nomeEmpresa}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right hidden sm:block">
                 <p className="text-white font-medium text-sm">{nomeExibicao}</p>
                 <p className="text-red-100 text-xs">{roleLabel}</p>
               </div>
+              {podeTrocarEmpresa && (
+                <button
+                  onClick={() => router.push('/selecionar-empresa')}
+                  className="text-red-100 hover:text-white text-sm font-medium border border-red-300 hover:border-white px-3 py-1.5 rounded-lg transition"
+                >
+                  Trocar empresa
+                </button>
+              )}
+              {perfil.role === 'master' && (
+                <button
+                  onClick={() => router.push('/configuracoes')}
+                  className="text-red-100 hover:text-white text-sm font-medium border border-red-300 hover:border-white px-3 py-1.5 rounded-lg transition"
+                >
+                  Configurações
+                </button>
+              )}
               <button
                 onClick={logout}
                 className="text-red-100 hover:text-white text-sm font-medium border border-red-300 hover:border-white px-3 py-1.5 rounded-lg transition"

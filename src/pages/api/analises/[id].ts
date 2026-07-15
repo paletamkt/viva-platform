@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
+import { verificarAuth } from '@/lib/serverAuth';
 
 export default async function handler(
   req: NextApiRequest,
@@ -12,6 +13,14 @@ export default async function handler(
   }
 
   if (req.method === 'DELETE') {
+    const perfil = await verificarAuth(req);
+    if (!perfil) {
+      return res.status(401).json({ erro: 'Não autenticado' });
+    }
+    if (perfil.role !== 'master') {
+      return res.status(403).json({ erro: 'Apenas Master pode excluir análises' });
+    }
+
     try {
       const supabase = getSupabase();
 
@@ -25,7 +34,6 @@ export default async function handler(
         return res.status(500).json({ erro: 'Erro ao excluir análise' });
       }
 
-      // Tenta remover o arquivo do Storage também (não crítico se falhar)
       await supabase.storage.from('conversas').remove([`${id}.txt`]);
 
       return res.status(200).json({ sucesso: true });

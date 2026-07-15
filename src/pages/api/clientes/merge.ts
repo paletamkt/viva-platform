@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
+import { verificarAuth } from '@/lib/serverAuth';
 
 export default async function handler(
   req: NextApiRequest,
@@ -7,6 +8,14 @@ export default async function handler(
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ erro: 'Método não permitido' });
+  }
+
+  const perfil = await verificarAuth(req);
+  if (!perfil) {
+    return res.status(401).json({ erro: 'Não autenticado' });
+  }
+  if (perfil.role !== 'master' && perfil.role !== 'suporte') {
+    return res.status(403).json({ erro: 'Sem permissão para mesclar clientes' });
   }
 
   try {
@@ -27,7 +36,6 @@ export default async function handler(
 
     const supabase = getSupabase();
 
-    // Move todas as análises do contato de origem para o contato de destino
     const updatePayload: any = { contato: contatoDestino };
     if (typeof cliente_nome === 'string' && cliente_nome.trim()) {
       updatePayload.cliente_nome = cliente_nome.trim();
@@ -42,7 +50,6 @@ export default async function handler(
       return res.status(500).json({ erro: 'Erro ao mesclar clientes' });
     }
 
-    // Se um nome foi definido, aplica também nas análises que já eram do destino
     if (typeof cliente_nome === 'string' && cliente_nome.trim()) {
       await (supabase.from('analises') as any)
         .update({ cliente_nome: cliente_nome.trim() })

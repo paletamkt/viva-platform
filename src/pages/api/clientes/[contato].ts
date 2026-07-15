@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
+import { verificarAuth } from '@/lib/serverAuth';
 
 export default async function handler(
   req: NextApiRequest,
@@ -12,6 +13,14 @@ export default async function handler(
   }
 
   if (req.method === 'PATCH') {
+    const perfil = await verificarAuth(req);
+    if (!perfil) {
+      return res.status(401).json({ erro: 'Não autenticado' });
+    }
+    if (perfil.role !== 'master' && perfil.role !== 'suporte') {
+      return res.status(403).json({ erro: 'Sem permissão para editar clientes' });
+    }
+
     try {
       const { cliente_nome } = req.body;
 
