@@ -8,7 +8,21 @@ interface AnalisesModalProps {
 }
 
 export default function AnalisesModal({ analise, onClose, onDeleted }: AnalisesModalProps) {
-  const json = analise.analise_json;
+  const jsonRaw: any = analise.analise_json || {};
+
+  // Tolerante a variações de nome de campo que a IA às vezes retorna
+  const pilares = jsonRaw.pilares || jsonRaw.cinco_pilares || [];
+  const sentimentoRaw = jsonRaw.sentimento || {};
+  const sentimento = {
+    score: typeof sentimentoRaw.score === 'number' ? sentimentoRaw.score : 0,
+    geral: sentimentoRaw.geral || sentimentoRaw.classificacao || 'neutro',
+    justificativa: sentimentoRaw.justificativa || '',
+  };
+  const problemas: string[] = jsonRaw.problemas || [];
+  const oportunidades: string[] = jsonRaw.oportunidades || [];
+  const acoesRecomendadas: string[] = jsonRaw.acoes_recomendadas || [];
+  const resumo: string = jsonRaw.resumo || '';
+
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
 
@@ -115,95 +129,107 @@ export default function AnalisesModal({ analise, onClose, onDeleted }: AnalisesM
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
               <div className="flex items-end gap-4">
                 <div>
-                  <p className="text-4xl font-bold text-gray-900">{json.sentimento.score}%</p>
+                  <p className="text-4xl font-bold text-gray-900">{sentimento.score}%</p>
                   <p className="text-lg font-medium text-gray-700 mt-2 capitalize">
-                    {json.sentimento.geral.replace(/_/g, ' ')}
+                    {sentimento.geral.replace(/_/g, ' ')}
                   </p>
                 </div>
                 <div className="flex-1">
                   <div className="w-full bg-gray-300 rounded-full h-3">
                     <div
                       className={`h-3 rounded-full ${
-                        json.sentimento.score >= 90 ? 'bg-green-600' :
-                        json.sentimento.score >= 75 ? 'bg-blue-600' :
-                        json.sentimento.score >= 50 ? 'bg-yellow-600' :
+                        sentimento.score >= 90 ? 'bg-green-600' :
+                        sentimento.score >= 75 ? 'bg-blue-600' :
+                        sentimento.score >= 50 ? 'bg-yellow-600' :
                         'bg-red-600'
                       }`}
-                      style={{ width: `${json.sentimento.score}%` }}
+                      style={{ width: `${sentimento.score}%` }}
                     />
                   </div>
                 </div>
               </div>
-              <p className="text-gray-700 mt-4">{json.sentimento.justificativa}</p>
+              {sentimento.justificativa && (
+                <p className="text-gray-700 mt-4">{sentimento.justificativa}</p>
+              )}
             </div>
           </section>
 
           {/* 5 Pilares */}
-          <section>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">🎯 5 Pilares de Análise</h3>
-            <div className="space-y-4">
-              {json.pilares.map((pilar, idx) => (
-                <div key={idx} className="bg-gradient-to-r from-purple-50 to-purple-100 p-5 rounded-xl border border-purple-200 hover:shadow-md transition">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="font-medium text-gray-900">{pilar.nome}</p>
-                    <p className="text-lg font-bold text-gray-900">{pilar.score}%</p>
+          {pilares.length > 0 && (
+            <section>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">🎯 5 Pilares de Análise</h3>
+              <div className="space-y-4">
+                {pilares.map((pilar: any, idx: number) => (
+                  <div key={idx} className="bg-gradient-to-r from-purple-50 to-purple-100 p-5 rounded-xl border border-purple-200 hover:shadow-md transition">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-medium text-gray-900">{pilar.nome}</p>
+                      <p className="text-lg font-bold text-gray-900">{pilar.score}%</p>
+                    </div>
+                    <div className="w-full bg-gray-300 rounded-full h-2 mb-3">
+                      <div
+                        className="h-2 rounded-full bg-blue-600"
+                        style={{ width: `${pilar.score}%` }}
+                      />
+                    </div>
+                    <p className="text-sm text-gray-700">{pilar.descricao}</p>
                   </div>
-                  <div className="w-full bg-gray-300 rounded-full h-2 mb-3">
-                    <div
-                      className="h-2 rounded-full bg-blue-600"
-                      style={{ width: `${pilar.score}%` }}
-                    />
-                  </div>
-                  <p className="text-sm text-gray-700">{pilar.descricao}</p>
-                </div>
-              ))}
-            </div>
-          </section>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Resumo */}
-          <section>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Resumo</h3>
-            <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">{json.resumo}</p>
-          </section>
+          {resumo && (
+            <section>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Resumo</h3>
+              <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">{resumo}</p>
+            </section>
+          )}
 
           {/* Problemas */}
-          <section>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">⚠️ Problemas Detectados</h3>
-            <ul className="space-y-2">
-              {json.problemas.map((problema, idx) => (
-                <li key={idx} className="flex gap-3 text-gray-700 bg-red-50 p-3 rounded-lg">
-                  <span>❌</span>
-                  <span>{problema}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
+          {problemas.length > 0 && (
+            <section>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">⚠️ Problemas Detectados</h3>
+              <ul className="space-y-2">
+                {problemas.map((problema, idx) => (
+                  <li key={idx} className="flex gap-3 text-gray-700 bg-red-50 p-3 rounded-lg">
+                    <span>❌</span>
+                    <span>{problema}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {/* Oportunidades */}
-          <section>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">💡 Oportunidades</h3>
-            <ul className="space-y-2">
-              {json.oportunidades.map((oportunidade, idx) => (
-                <li key={idx} className="flex gap-3 text-gray-700 bg-blue-50 p-3 rounded-lg">
-                  <span>✨</span>
-                  <span>{oportunidade}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
+          {oportunidades.length > 0 && (
+            <section>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">💡 Oportunidades</h3>
+              <ul className="space-y-2">
+                {oportunidades.map((oportunidade, idx) => (
+                  <li key={idx} className="flex gap-3 text-gray-700 bg-blue-50 p-3 rounded-lg">
+                    <span>✨</span>
+                    <span>{oportunidade}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {/* Ações Recomendadas */}
-          <section>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">✅ Ações Recomendadas</h3>
-            <ul className="space-y-2">
-              {json.acoes_recomendadas.map((acao, idx) => (
-                <li key={idx} className="flex gap-3 text-gray-700 bg-green-50 p-3 rounded-lg">
-                  <span>→</span>
-                  <span>{acao}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
+          {acoesRecomendadas.length > 0 && (
+            <section>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">✅ Ações Recomendadas</h3>
+              <ul className="space-y-2">
+                {acoesRecomendadas.map((acao, idx) => (
+                  <li key={idx} className="flex gap-3 text-gray-700 bg-green-50 p-3 rounded-lg">
+                    <span>→</span>
+                    <span>{acao}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {/* Metadados */}
           <section className="border-t border-gray-200 pt-6">
