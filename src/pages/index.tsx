@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { getAnalises, getClientesPorContato } from '@/lib/supabase';
 import { Analise } from '@/lib/types';
 import UploadModal from '@/components/UploadModal';
 import AnalisesGrid from '@/components/AnalisesGrid';
@@ -20,10 +19,14 @@ export default function Home() {
     setLoading(true);
     try {
       if (tab === 'conversas') {
-        const data = await getAnalises();
+        const res = await fetch('/api/analises');
+        if (!res.ok) throw new Error('Falha ao buscar análises');
+        const data = await res.json();
         setAnalises(data as Analise[]);
       } else {
-        const data = await getClientesPorContato();
+        const res = await fetch('/api/clientes');
+        if (!res.ok) throw new Error('Falha ao buscar clientes');
+        const data = await res.json();
         setClientes(data);
       }
     } catch (error) {
@@ -133,18 +136,3 @@ export default function Home() {
           </div>
         ) : tab === 'conversas' ? (
           <AnalisesGrid analises={analises} />
-        ) : (
-          <ClientesGrid clientes={clientes} />
-        )}
-      </div>
-
-      {/* Upload Modal */}
-      {showUploadModal && (
-        <UploadModal
-          onClose={() => setShowUploadModal(false)}
-          onSuccess={handleUploadSuccess}
-        />
-      )}
-    </div>
-  );
-}
