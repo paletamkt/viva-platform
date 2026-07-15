@@ -104,6 +104,7 @@ export default function ClientesGrid({ clientes, onChanged }: ClientesGridProps)
       {selectedCliente && (
         <ClientePerfilModal
           cliente={selectedCliente}
+          todosClientes={clientes}
           onClose={() => setSelectedCliente(null)}
           onChanged={onChanged}
         />
