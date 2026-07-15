@@ -55,9 +55,8 @@ export default function Home() {
       <header className="bg-gradient-to-r from-red-600 to-red-700 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-4xl font-bold text-white">🍕 VIVA Platform</h1>
-              <p className="text-red-100 mt-2">Análise Inteligente de Conversas com Claude AI</p>
+            <div className="bg-white/95 rounded-lg px-4 py-3 inline-block">
+              <img src="/logo.png" alt="VIVA Platform" className="h-12 w-auto" />
             </div>
             <button
               onClick={() => setShowUploadModal(true)}
