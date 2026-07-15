@@ -41,7 +41,23 @@ export default async function handler(
     const dataParte = new Date().toISOString().substring(0, 10).replace(/-/g, '');
     const analiseId = `evt_loppifest_${dataParte}_${contato}`;
 
-    // 4. Salvar arquivo .txt no Storage
+    // 4. Checar se essa mesma análise já existe (evita duplicata por reenvio)
+    const { data: existente } = await supabase
+      .from('analises')
+      .select('id, cliente_nome, criado_em')
+      .eq('id', analiseId)
+      .maybeSingle();
+
+    if (existente) {
+      return res.status(409).json({
+        erro: 'Essa conversa já foi analisada anteriormente.',
+        analise_id: (existente as any).id,
+        cliente_nome: (existente as any).cliente_nome,
+        criado_em: (existente as any).criado_em,
+      });
+    }
+
+    // 5. Salvar arquivo .txt no Storage
     const nomeArquivo = `${analiseId}.txt`;
     const { error: uploadError } = await supabase.storage
       .from('conversas')
@@ -54,7 +70,7 @@ export default async function handler(
       // Continuar mesmo se falhar (não é crítico)
     }
 
-    // 5. Salvar análise no banco
+    // 6. Salvar análise no banco
     const docAnalise = {
       id: analiseId,
       contato,
