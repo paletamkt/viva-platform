@@ -5,9 +5,10 @@ import AnalisesModal from './AnalisesModal';
 interface AnalisesGridProps {
   analises: Analise[];
   onChanged?: () => void;
+  role?: 'master' | 'suporte' | 'cliente_suporte';
 }
 
-export default function AnalisesGrid({ analises, onChanged }: AnalisesGridProps) {
+export default function AnalisesGrid({ analises, onChanged, role }: AnalisesGridProps) {
   const [selectedAnalise, setSelectedAnalise] = useState<Analise | null>(null);
 
   if (analises.length === 0) {
@@ -86,6 +87,7 @@ export default function AnalisesGrid({ analises, onChanged }: AnalisesGridProps)
           analise={selectedAnalise}
           onClose={() => setSelectedAnalise(null)}
           onDeleted={onChanged}
+          role={role}
         />
       )}
     </>

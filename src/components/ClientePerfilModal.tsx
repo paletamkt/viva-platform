@@ -7,6 +7,7 @@ interface ClientePerfilModalProps {
   todosClientes?: any[];
   onClose: () => void;
   onChanged?: () => void;
+  role?: 'master' | 'suporte' | 'cliente_suporte';
 }
 
 export default function ClientePerfilModal({
@@ -14,8 +15,11 @@ export default function ClientePerfilModal({
   todosClientes = [],
   onClose,
   onChanged,
+  role,
 }: ClientePerfilModalProps) {
   const [selectedAnalise, setSelectedAnalise] = useState<Analise | null>(null);
+
+  const podeGerenciar = role === 'master' || role === 'suporte';
 
   // Nome exibido localmente, atualizado após edição sem precisar fechar o modal
   const [nomeAtual, setNomeAtual] = useState<string>(cliente.cliente_nome || '');
@@ -100,6 +104,7 @@ export default function ClientePerfilModal({
           if (onChanged) onChanged();
           onClose();
         }}
+        role={role}
       />
     );
   }
@@ -143,16 +148,18 @@ export default function ClientePerfilModal({
                   <h2 className="text-2xl font-bold text-gray-900">
                     {nomeAtual || `Cliente ${cliente.contato.slice(-4)}`}
                   </h2>
-                  <button
-                    onClick={() => {
-                      setNomeInput(nomeAtual);
-                      setEditandoNome(true);
-                    }}
-                    className="text-gray-400 hover:text-gray-700 text-sm"
-                    title="Editar nome"
-                  >
-                    ✏️
-                  </button>
+                  {podeGerenciar && (
+                    <button
+                      onClick={() => {
+                        setNomeInput(nomeAtual);
+                        setEditandoNome(true);
+                      }}
+                      className="text-gray-400 hover:text-gray-700 text-sm"
+                      title="Editar nome"
+                    >
+                      ✏️
+                    </button>
+                  )}
                 </div>
               )}
               <p className="text-sm text-gray-600">
@@ -168,7 +175,7 @@ export default function ClientePerfilModal({
           </div>
 
           {/* Ação de mesclar */}
-          {outrosClientes.length > 0 && (
+          {podeGerenciar && outrosClientes.length > 0 && (
             <button
               onClick={() => setMesclando(!mesclando)}
               className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium"
@@ -177,7 +184,7 @@ export default function ClientePerfilModal({
             </button>
           )}
 
-          {mesclando && (
+          {podeGerenciar && mesclando && (
             <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm font-medium text-gray-900 mb-2">
                 Escolha o cliente que deve receber as conversas deste perfil:

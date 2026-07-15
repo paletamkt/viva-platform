@@ -5,12 +5,12 @@ interface AnalisesModalProps {
   analise: Analise;
   onClose: () => void;
   onDeleted?: () => void;
+  role?: 'master' | 'suporte' | 'cliente_suporte';
 }
 
-export default function AnalisesModal({ analise, onClose, onDeleted }: AnalisesModalProps) {
+export default function AnalisesModal({ analise, onClose, onDeleted, role }: AnalisesModalProps) {
   const jsonRaw: any = analise.analise_json || {};
 
-  // Tolerante a variações de nome de campo que a IA às vezes retorna
   const pilares = jsonRaw.pilares || jsonRaw.cinco_pilares || [];
   const sentimentoRaw = jsonRaw.sentimento || {};
   const sentimento = {
@@ -22,6 +22,8 @@ export default function AnalisesModal({ analise, onClose, onDeleted }: AnalisesM
   const oportunidades: string[] = jsonRaw.oportunidades || [];
   const acoesRecomendadas: string[] = jsonRaw.acoes_recomendadas || [];
   const resumo: string = jsonRaw.resumo || '';
+
+  const podeExcluir = role === 'master';
 
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
@@ -81,12 +83,14 @@ export default function AnalisesModal({ analise, onClose, onDeleted }: AnalisesM
             >
               📥 Baixar conversa (.txt)
             </button>
-            <button
-              onClick={() => setConfirmandoExclusao(true)}
-              className="bg-red-50 hover:bg-red-100 text-red-600 text-sm font-medium px-4 py-2 rounded-lg transition"
-            >
-              🗑️ Excluir
-            </button>
+            {podeExcluir && (
+              <button
+                onClick={() => setConfirmandoExclusao(true)}
+                className="bg-red-50 hover:bg-red-100 text-red-600 text-sm font-medium px-4 py-2 rounded-lg transition"
+              >
+                🗑️ Excluir
+              </button>
+            )}
             <button
               onClick={onClose}
               className="text-gray-500 hover:text-gray-700 text-2xl"

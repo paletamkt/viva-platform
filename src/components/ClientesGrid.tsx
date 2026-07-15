@@ -4,9 +4,10 @@ import ClientePerfilModal from './ClientePerfilModal';
 interface ClientesGridProps {
   clientes: any[];
   onChanged?: () => void;
+  role?: 'master' | 'suporte' | 'cliente_suporte';
 }
 
-export default function ClientesGrid({ clientes, onChanged }: ClientesGridProps) {
+export default function ClientesGrid({ clientes, onChanged, role }: ClientesGridProps) {
   const [selectedCliente, setSelectedCliente] = useState<any>(null);
 
   if (clientes.length === 0) {
@@ -107,6 +108,7 @@ export default function ClientesGrid({ clientes, onChanged }: ClientesGridProps)
           todosClientes={clientes}
           onClose={() => setSelectedCliente(null)}
           onChanged={onChanged}
+          role={role}
         />
       )}
     </>

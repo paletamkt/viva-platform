@@ -3,8 +3,10 @@ import { Analise } from '@/lib/types';
 import UploadModal from '@/components/UploadModal';
 import AnalisesGrid from '@/components/AnalisesGrid';
 import ClientesGrid from '@/components/ClientesGrid';
+import { useAuth } from '@/lib/useAuth';
 
 export default function Home() {
+  const { perfil, carregando: carregandoAuth, logout } = useAuth();
   const [tab, setTab] = useState<'conversas' | 'clientes'>('conversas');
   const [analises, setAnalises] = useState<Analise[]>([]);
   const [clientes, setClientes] = useState<any[]>([]);
@@ -12,8 +14,10 @@ export default function Home() {
   const [showUploadModal, setShowUploadModal] = useState(false);
 
   useEffect(() => {
-    loadAll();
-  }, []);
+    if (perfil) {
+      loadAll();
+    }
+  }, [perfil]);
 
   async function loadAll() {
     setLoading(true);
@@ -51,6 +55,21 @@ export default function Home() {
       : 0,
   };
 
+  if (carregandoAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-10 h-10 border-4 border-gray-200 border-t-red-600 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!perfil) {
+    return null; // useAuth já redireciona para /login
+  }
+
+  const nomeExibicao = perfil.nome || perfil.email;
+  const roleLabel = perfil.role === 'master' ? 'Master' : perfil.role === 'suporte' ? 'Suporte' : 'Cliente-Suporte';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
       {/* Header */}
@@ -60,12 +79,24 @@ export default function Home() {
             <div className="bg-white/95 rounded-lg px-4 py-3 inline-block">
               <img src="/logo.png" alt="VIVA Platform" className="h-12 w-auto" />
             </div>
-            <button
-              onClick={() => setShowUploadModal(true)}
-              className="bg-white hover:bg-red-50 text-red-600 px-8 py-3 rounded-lg font-bold transition shadow-lg hover:shadow-xl"
-            >
-              ✨ + Nova Análise
-            </button>
+            <div className="flex items-center gap-4">
+              <div className="text-right hidden sm:block">
+                <p className="text-white font-medium text-sm">{nomeExibicao}</p>
+                <p className="text-red-100 text-xs">{roleLabel}</p>
+              </div>
+              <button
+                onClick={logout}
+                className="text-red-100 hover:text-white text-sm font-medium border border-red-300 hover:border-white px-3 py-1.5 rounded-lg transition"
+              >
+                Sair
+              </button>
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className="bg-white hover:bg-red-50 text-red-600 px-8 py-3 rounded-lg font-bold transition shadow-lg hover:shadow-xl"
+              >
+                ✨ + Nova Análise
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -136,9 +167,9 @@ export default function Home() {
             <p className="text-gray-600">Carregando...</p>
           </div>
         ) : tab === 'conversas' ? (
-          <AnalisesGrid analises={analises} onChanged={loadAll} />
+          <AnalisesGrid analises={analises} onChanged={loadAll} role={perfil.role} />
         ) : (
-          <ClientesGrid clientes={clientes} onChanged={loadAll} />
+          <ClientesGrid clientes={clientes} onChanged={loadAll} role={perfil.role} />
         )}
       </div>
 
