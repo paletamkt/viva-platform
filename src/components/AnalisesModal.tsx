@@ -8,6 +8,20 @@ interface AnalisesModalProps {
 export default function AnalisesModal({ analise, onClose }: AnalisesModalProps) {
   const json = analise.analise_json;
 
+  function downloadConversaOriginal() {
+    const conteudo = analise.conversa_original || '';
+    const element = document.createElement('a');
+    const file = new Blob([conteudo], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    const nomeCliente = (analise.cliente_nome || `cliente_${analise.contato.slice(-4)}`)
+      .toLowerCase()
+      .replace(/\s+/g, '_');
+    element.download = `conversa_${nomeCliente}_${analise.data_conversa_inicio.slice(0, 10)}.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -21,12 +35,20 @@ export default function AnalisesModal({ analise, onClose }: AnalisesModalProps) 
               📱 {analise.contato ? `+55 (${analise.contato.slice(2, 4)}) ${analise.contato.slice(4)}` : 'Sem contato'}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl"
-          >
-            ×
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={downloadConversaOriginal}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+            >
+              📥 Baixar conversa (.txt)
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 text-2xl"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -125,14 +147,6 @@ export default function AnalisesModal({ analise, onClose }: AnalisesModalProps) 
                 </li>
               ))}
             </ul>
-          </section>
-
-          {/* JSON Raw */}
-          <section>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">JSON Completo</h3>
-            <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg text-xs overflow-x-auto">
-              {JSON.stringify(json, null, 2)}
-            </pre>
           </section>
 
           {/* Metadados */}
