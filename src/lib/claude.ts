@@ -47,27 +47,54 @@ Você é um analista especialista em conversas de vendas para eventos. Sua taref
 ### AÇÕES RECOMENDADAS (array 1-5 itens)
 
 ## REGRAS CRÍTICAS
-
 1. Retorne APENAS JSON válido, sem markdown
 2. Scores: números inteiros 0-100
 3. Datas: ISO 8601 com Z final
 4. cliente_nome: NUNCA "Cliente 01"
 5. Arrays: mínimo 1, máximo 5 itens
+6. Use EXATAMENTE os nomes de campo especificados acima (ex: "pilares", não "cinco_pilares"; "geral" dentro de "sentimento", não "classificacao")
 
 Retorne APENAS JSON, nada mais!`;
 
-export async function analisarConversa(conversa: string): Promise<AnaliseJson | null> {
+interface ContextoEmpresa {
+  nome?: string;
+  posicionamento?: string;
+  tom_recomendado?: string;
+  objecoes_mapeadas?: any;
+}
+
+function montarBlocoContexto(contexto?: ContextoEmpresa | null): string {
+  if (!contexto) return '';
+
+  const partes: string[] = [];
+  if (contexto.nome) partes.push(`Empresa: ${contexto.nome}`);
+  if (contexto.posicionamento) partes.push(`Posicionamento: ${contexto.posicionamento}`);
+  if (contexto.tom_recomendado) partes.push(`Tom de atendimento esperado: ${contexto.tom_recomendado}`);
+  if (contexto.objecoes_mapeadas && Array.isArray(contexto.objecoes_mapeadas) && contexto.objecoes_mapeadas.length > 0) {
+    partes.push(`Objeções comuns mapeadas: ${JSON.stringify(contexto.objecoes_mapeadas)}`);
+  }
+
+  if (partes.length === 0) return '';
+
+  return `\n## CONTEXTO DA EMPRESA\nUse este contexto para avaliar com mais precisão se o atendimento seguiu o posicionamento e tom esperados da empresa.\n${partes.join('\n')}\n`;
+}
+
+export async function analisarConversa(
+  conversa: string,
+  contextoEmpresa?: ContextoEmpresa | null
+): Promise<AnaliseJson | null> {
   try {
     const apiKey = process.env.CLAUDE_API_KEY;
-    
+
     if (!apiKey) {
       throw new Error('CLAUDE_API_KEY não configurada');
     }
 
+    const blocoContexto = montarBlocoContexto(contextoEmpresa);
+
     const prompt = `${PROMPT_VIVA_2_0}
-
+${blocoContexto}
 ## CONVERSA A ANALISAR
-
 ${conversa}`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -96,21 +123,20 @@ ${conversa}`;
     }
 
     const data = await response.json();
-    
+
     if (!data.content || !data.content[0]) {
       throw new Error('Resposta inválida da Claude API');
     }
 
     const responseText = data.content[0].text;
-    
-    // Extrair JSON da resposta (pode estar envolvido em markdown)
+
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       throw new Error('Não foi possível extrair JSON da resposta');
     }
 
     const analise = JSON.parse(jsonMatch[0]) as AnaliseJson;
-    
+
     return analise;
   } catch (error) {
     console.error('Erro ao analisar conversa:', error);

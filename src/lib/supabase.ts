@@ -1,10 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Marcar como server-only
 let supabaseClient: ReturnType<typeof createClient> | null = null;
 
 function initializeSupabase() {
-  // Só executar em runtime, nunca em build time
   if (typeof window !== 'undefined') {
     throw new Error('Supabase client should only be used on the server');
   }
@@ -114,5 +112,22 @@ export async function getAnalisasPorContato(contato: string) {
   } catch (error) {
     console.error('getAnalisasPorContato error:', error);
     return [];
+  }
+}
+
+export async function getEmpresa(empresaId: string) {
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('empresas')
+      .select('*')
+      .eq('id', empresaId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('getEmpresa error:', error);
+    return null;
   }
 }

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { analisarConversa } from '@/lib/claude';
-import { getSupabase } from '@/lib/supabase';
+import { getSupabase, getEmpresa } from '@/lib/supabase';
 import { extractContato } from '@/lib/contato';
 import { hashConversa } from '@/lib/hash';
 import { normalizeAnalise } from '@/lib/normalizeAnalise';
@@ -27,9 +27,12 @@ export default async function handler(
     const supabase = getSupabase();
     const empresaId = getEmpresaAtivaId();
 
-    // 1. Chamar Claude API (análise + extração de nome/datas)
+    // 0. Buscar contexto da empresa (posicionamento, tom, objeções)
+    const contextoEmpresa = await getEmpresa(empresaId);
+
+    // 1. Chamar Claude API (análise + extração de nome/datas), já com contexto
     console.log('Analisando conversa com Claude...');
-    const analiseJsonRaw = await analisarConversa(conversa);
+    const analiseJsonRaw = await analisarConversa(conversa, contextoEmpresa as any);
 
     if (!analiseJsonRaw) {
       return res.status(500).json({
@@ -80,7 +83,7 @@ export default async function handler(
       // Continuar mesmo se falhar (não é crítico)
     }
 
-    // 6. Salvar análise no banco
+    // 6. Salvar análise no banco (incluindo snapshot do contexto usado)
     const docAnalise = {
       id: analiseId,
       contato,
@@ -93,6 +96,7 @@ export default async function handler(
       sentimento_score: analiseJson.sentimento.score,
       sentimento_geral: analiseJson.sentimento.geral,
       versao_prompt: '2.0.0',
+      contexto_snapshot: contextoEmpresa,
       status: 'confirmado',
       criado_por: 'api',
       criado_em: new Date().toISOString(),
