@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { analisarConversa } from '@/lib/claude';
 import { getSupabase } from '@/lib/supabase';
 import { extractContato } from '@/lib/contato';
+import { hashConversa } from '@/lib/hash';
 import { AnaliseJson } from '@/lib/types';
 
 export default async function handler(
@@ -37,11 +38,14 @@ export default async function handler(
     //    Fallback: usa o que o Claude sugeriu, e por último "semcontato"
     const contato = extractContato(conversa) || analiseJson.contato || 'semcontato';
 
-    // 3. Gerar ID da análise (baseado no contato normalizado)
+    // 3. Gerar ID da análise (contato + data + hash do conteúdo)
+    //    O hash garante que só um reenvio do MESMO texto seja tratado
+    //    como duplicata — qualquer edição no conteúdo gera um ID novo.
     const dataParte = new Date().toISOString().substring(0, 10).replace(/-/g, '');
-    const analiseId = `evt_loppifest_${dataParte}_${contato}`;
+    const hash = hashConversa(conversa);
+    const analiseId = `evt_loppifest_${dataParte}_${contato}_${hash}`;
 
-    // 4. Checar se essa mesma análise já existe (evita duplicata por reenvio)
+    // 4. Checar se essa mesma análise já existe (evita duplicata por reenvio idêntico)
     const { data: existente } = await supabase
       .from('analises')
       .select('id, cliente_nome, criado_em')
@@ -50,7 +54,7 @@ export default async function handler(
 
     if (existente) {
       return res.status(409).json({
-        erro: 'Essa conversa já foi analisada anteriormente.',
+        erro: 'Essa conversa já foi analisada anteriormente (conteúdo idêntico).',
         analise_id: (existente as any).id,
         cliente_nome: (existente as any).cliente_nome,
         criado_em: (existente as any).criado_em,
