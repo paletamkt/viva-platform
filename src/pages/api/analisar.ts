@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { analisarConversa } from '@/lib/claude';
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 import { AnaliseJson } from '@/lib/types';
 
 export default async function handler(
@@ -19,6 +19,8 @@ export default async function handler(
         erro: 'Conversa muito curta (mínimo 50 caracteres)',
       });
     }
+
+    const supabase = getSupabase(); // inicializa aqui, em runtime
 
     // 1. Chamar Claude API
     console.log('Analisando conversa com Claude...');
@@ -69,7 +71,7 @@ export default async function handler(
 
     const { data, error } = await supabase
       .from('analises')
-      .insert([docAnalise])
+      .insert([docAnalise] as any)
       .select();
 
     if (error) {
