@@ -20,11 +20,11 @@ export default function AnalisesGrid({ analises }: AnalisesGridProps) {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {analises.map((analise) => (
           <div
             key={analise.id}
-            className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition cursor-pointer"
+            className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-xl hover:-translate-y-1 transition cursor-pointer"
             onClick={() => setSelectedAnalise(analise)}
           >
             {/* Cliente */}
