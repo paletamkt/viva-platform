@@ -33,8 +33,8 @@ export default function AnalisesModal({ analise, onClose }: AnalisesModalProps) 
         <div className="p-6 space-y-8">
           {/* Sentimento */}
           <section>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Sentimento Geral</h3>
-            <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">😊 Sentimento Geral</h3>
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
               <div className="flex items-end gap-4">
                 <div>
                   <p className="text-4xl font-bold text-gray-900">{json.sentimento.score}%</p>
@@ -62,10 +62,10 @@ export default function AnalisesModal({ analise, onClose }: AnalisesModalProps) 
 
           {/* 5 Pilares */}
           <section>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">5 Pilares de Análise</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4">🎯 5 Pilares de Análise</h3>
             <div className="space-y-4">
               {json.pilares.map((pilar, idx) => (
-                <div key={idx} className="bg-gray-50 p-4 rounded-lg">
+                <div key={idx} className="bg-gradient-to-r from-purple-50 to-purple-100 p-5 rounded-xl border border-purple-200 hover:shadow-md transition">
                   <div className="flex items-center justify-between mb-2">
                     <p className="font-medium text-gray-900">{pilar.nome}</p>
                     <p className="text-lg font-bold text-gray-900">{pilar.score}%</p>

@@ -47,39 +47,54 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <header className="bg-gradient-to-r from-red-600 to-red-700 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">VIVA Platform</h1>
-              <p className="text-gray-600 mt-1">Análise Inteligente de Conversas</p>
+              <h1 className="text-4xl font-bold text-white">🍕 VIVA Platform</h1>
+              <p className="text-red-100 mt-2">Análise Inteligente de Conversas com Claude AI</p>
             </div>
             <button
               onClick={() => setShowUploadModal(true)}
-              className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition"
+              className="bg-white hover:bg-red-50 text-red-600 px-8 py-3 rounded-lg font-bold transition shadow-lg hover:shadow-xl"
             >
-              + Nova Análise
+              ✨ + Nova Análise
             </button>
           </div>
         </div>
       </header>
 
       {/* Stats */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <p className="text-gray-600 text-sm font-medium">Total de Conversas</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalConversas}</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition border-l-4 border-red-600">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm font-semibold uppercase tracking-wide">Total de Conversas</p>
+                <p className="text-4xl font-bold text-gray-900 mt-3">{stats.totalConversas}</p>
+              </div>
+              <span className="text-4xl">💬</span>
+            </div>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <p className="text-gray-600 text-sm font-medium">Clientes Únicos</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{stats.clientesUnicos}</p>
+          <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition border-l-4 border-blue-600">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm font-semibold uppercase tracking-wide">Clientes Únicos</p>
+                <p className="text-4xl font-bold text-gray-900 mt-3">{stats.clientesUnicos}</p>
+              </div>
+              <span className="text-4xl">👥</span>
+            </div>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <p className="text-gray-600 text-sm font-medium">Sentimento Médio</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{stats.sentimentoMedio}%</p>
+          <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition border-l-4 border-green-600">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm font-semibold uppercase tracking-wide">Sentimento Médio</p>
+                <p className="text-4xl font-bold text-gray-900 mt-3">{stats.sentimentoMedio}%</p>
+              </div>
+              <span className="text-4xl">😊</span>
+            </div>
           </div>
         </div>
       </div>
