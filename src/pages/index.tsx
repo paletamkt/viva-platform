@@ -136,3 +136,18 @@ export default function Home() {
           </div>
         ) : tab === 'conversas' ? (
           <AnalisesGrid analises={analises} />
+        ) : (
+          <ClientesGrid clientes={clientes} />
+        )}
+      </div>
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <UploadModal
+          onClose={() => setShowUploadModal(false)}
+          onSuccess={handleUploadSuccess}
+        />
+      )}
+    </div>
+  );
+}
