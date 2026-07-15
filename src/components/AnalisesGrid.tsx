@@ -4,9 +4,10 @@ import AnalisesModal from './AnalisesModal';
 
 interface AnalisesGridProps {
   analises: Analise[];
+  onChanged?: () => void;
 }
 
-export default function AnalisesGrid({ analises }: AnalisesGridProps) {
+export default function AnalisesGrid({ analises, onChanged }: AnalisesGridProps) {
   const [selectedAnalise, setSelectedAnalise] = useState<Analise | null>(null);
 
   if (analises.length === 0) {
@@ -36,14 +37,12 @@ export default function AnalisesGrid({ analises }: AnalisesGridProps) {
                 📱 {analise.contato ? `+55 (${analise.contato.slice(2, 4)}) ${analise.contato.slice(4, 9)}-${analise.contato.slice(9)}` : 'Sem contato'}
               </p>
             </div>
-
             {/* Datas */}
             <div className="text-xs text-gray-500 space-y-1 mb-4">
               <p>📅 Conversa: {new Date(analise.data_conversa_inicio).toLocaleString('pt-BR')}</p>
               <p>⬆️ Upload: {new Date(analise.data_upload).toLocaleString('pt-BR')}</p>
               <p>💬 Última msg: {new Date(analise.data_ultima_mensagem).toLocaleString('pt-BR')}</p>
             </div>
-
             {/* Sentimento */}
             <div className="flex items-center gap-2 mb-4">
               <div className="flex-1">
@@ -64,7 +63,6 @@ export default function AnalisesGrid({ analises }: AnalisesGridProps) {
                 </div>
               </div>
             </div>
-
             {/* Status */}
             <div className="flex items-center gap-2">
               <span className={`px-2 py-1 text-xs font-medium rounded ${
@@ -75,7 +73,6 @@ export default function AnalisesGrid({ analises }: AnalisesGridProps) {
                 {analise.status === 'confirmado' ? '✓ Confirmado' : '⏳ Pendente'}
               </span>
             </div>
-
             {/* CTA */}
             <button className="mt-4 w-full text-red-600 hover:text-red-700 font-medium text-sm">
               Ver análise completa →
@@ -83,12 +80,12 @@ export default function AnalisesGrid({ analises }: AnalisesGridProps) {
           </div>
         ))}
       </div>
-
       {/* Modal */}
       {selectedAnalise && (
         <AnalisesModal
           analise={selectedAnalise}
           onClose={() => setSelectedAnalise(null)}
+          onDeleted={onChanged}
         />
       )}
     </>

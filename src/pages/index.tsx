@@ -12,23 +12,25 @@ export default function Home() {
   const [showUploadModal, setShowUploadModal] = useState(false);
 
   useEffect(() => {
-    loadData();
-  }, [tab]);
+    loadAll();
+  }, []);
 
-  async function loadData() {
+  async function loadAll() {
     setLoading(true);
     try {
-      if (tab === 'conversas') {
-        const res = await fetch('/api/analises');
-        if (!res.ok) throw new Error('Falha ao buscar análises');
-        const data = await res.json();
-        setAnalises(data as Analise[]);
-      } else {
-        const res = await fetch('/api/clientes');
-        if (!res.ok) throw new Error('Falha ao buscar clientes');
-        const data = await res.json();
-        setClientes(data);
-      }
+      const [resAnalises, resClientes] = await Promise.all([
+        fetch('/api/analises'),
+        fetch('/api/clientes'),
+      ]);
+
+      if (!resAnalises.ok) throw new Error('Falha ao buscar análises');
+      if (!resClientes.ok) throw new Error('Falha ao buscar clientes');
+
+      const dataAnalises = await resAnalises.json();
+      const dataClientes = await resClientes.json();
+
+      setAnalises(dataAnalises as Analise[]);
+      setClientes(dataClientes);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
@@ -38,7 +40,7 @@ export default function Home() {
 
   const handleUploadSuccess = () => {
     setShowUploadModal(false);
-    loadData();
+    loadAll();
   };
 
   const stats = {
@@ -134,9 +136,9 @@ export default function Home() {
             <p className="text-gray-600">Carregando...</p>
           </div>
         ) : tab === 'conversas' ? (
-          <AnalisesGrid analises={analises} />
+          <AnalisesGrid analises={analises} onChanged={loadAll} />
         ) : (
-          <ClientesGrid clientes={clientes} />
+          <ClientesGrid clientes={clientes} onChanged={loadAll} />
         )}
       </div>
 

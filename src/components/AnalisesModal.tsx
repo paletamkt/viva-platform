@@ -1,12 +1,16 @@
+import { useState } from 'react';
 import { Analise } from '@/lib/types';
 
 interface AnalisesModalProps {
   analise: Analise;
   onClose: () => void;
+  onDeleted?: () => void;
 }
 
-export default function AnalisesModal({ analise, onClose }: AnalisesModalProps) {
+export default function AnalisesModal({ analise, onClose, onDeleted }: AnalisesModalProps) {
   const json = analise.analise_json;
+  const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
 
   function downloadConversaOriginal() {
     const conteudo = analise.conversa_original || '';
@@ -20,6 +24,27 @@ export default function AnalisesModal({ analise, onClose }: AnalisesModalProps) 
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
+  }
+
+  async function handleExcluir() {
+    setExcluindo(true);
+    try {
+      const res = await fetch(`/api/analises/${analise.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        throw new Error('Falha ao excluir análise');
+      }
+
+      onClose();
+      if (onDeleted) onDeleted();
+    } catch (error) {
+      console.error('Erro ao excluir:', error);
+      alert('Erro ao excluir a análise. Tente novamente.');
+      setExcluindo(false);
+      setConfirmandoExclusao(false);
+    }
   }
 
   return (
@@ -43,6 +68,12 @@ export default function AnalisesModal({ analise, onClose }: AnalisesModalProps) 
               📥 Baixar conversa (.txt)
             </button>
             <button
+              onClick={() => setConfirmandoExclusao(true)}
+              className="bg-red-50 hover:bg-red-100 text-red-600 text-sm font-medium px-4 py-2 rounded-lg transition"
+            >
+              🗑️ Excluir
+            </button>
+            <button
               onClick={onClose}
               className="text-gray-500 hover:text-gray-700 text-2xl"
             >
@@ -50,6 +81,31 @@ export default function AnalisesModal({ analise, onClose }: AnalisesModalProps) 
             </button>
           </div>
         </div>
+
+        {/* Confirmação de exclusão */}
+        {confirmandoExclusao && (
+          <div className="bg-red-50 border-b border-red-200 px-6 py-4">
+            <p className="text-red-800 font-medium mb-3">
+              Tem certeza que deseja excluir esta análise? Essa ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleExcluir}
+                disabled={excluindo}
+                className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+              >
+                {excluindo ? 'Excluindo...' : 'Sim, excluir'}
+              </button>
+              <button
+                onClick={() => setConfirmandoExclusao(false)}
+                disabled={excluindo}
+                className="bg-white hover:bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg border border-gray-300 transition"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Content */}
         <div className="p-6 space-y-8">
