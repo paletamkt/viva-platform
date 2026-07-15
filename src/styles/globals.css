@@ -21,9 +21,10 @@ body {
 input,
 textarea,
 select {
-  @apply font-inherit;
+  font-family: inherit;
 }
 
 button {
-  @apply font-inherit cursor-pointer;
+  font-family: inherit;
+  cursor: pointer;
 }
