@@ -3,9 +3,10 @@ import ClientePerfilModal from './ClientePerfilModal';
 
 interface ClientesGridProps {
   clientes: any[];
+  onChanged?: () => void;
 }
 
-export default function ClientesGrid({ clientes }: ClientesGridProps) {
+export default function ClientesGrid({ clientes, onChanged }: ClientesGridProps) {
   const [selectedCliente, setSelectedCliente] = useState<any>(null);
 
   if (clientes.length === 0) {
@@ -104,6 +105,7 @@ export default function ClientesGrid({ clientes }: ClientesGridProps) {
         <ClientePerfilModal
           cliente={selectedCliente}
           onClose={() => setSelectedCliente(null)}
+          onChanged={onChanged}
         />
       )}
     </>

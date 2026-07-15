@@ -5,9 +5,10 @@ import { Analise } from '@/lib/types';
 interface ClientePerfilModalProps {
   cliente: any;
   onClose: () => void;
+  onChanged?: () => void;
 }
 
-export default function ClientePerfilModal({ cliente, onClose }: ClientePerfilModalProps) {
+export default function ClientePerfilModal({ cliente, onClose, onChanged }: ClientePerfilModalProps) {
   const [selectedAnalise, setSelectedAnalise] = useState<Analise | null>(null);
   const conversas = cliente.conversas || [];
 
@@ -20,7 +21,17 @@ export default function ClientePerfilModal({ cliente, onClose }: ClientePerfilMo
       : 0;
 
   if (selectedAnalise) {
-    return <AnalisesModal analise={selectedAnalise} onClose={() => setSelectedAnalise(null)} />;
+    return (
+      <AnalisesModal
+        analise={selectedAnalise}
+        onClose={() => setSelectedAnalise(null)}
+        onDeleted={() => {
+          setSelectedAnalise(null);
+          if (onChanged) onChanged();
+          onClose();
+        }}
+      />
+    );
   }
 
   return (
