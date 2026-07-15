@@ -28,19 +28,32 @@ export default function AnalisesModal({ analise, onClose, onDeleted, role }: Ana
 
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
+  const [baixando, setBaixando] = useState(false);
 
-  function downloadConversaOriginal() {
-    const conteudo = analise.conversa_original || '';
-    const element = document.createElement('a');
-    const file = new Blob([conteudo], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    const nomeCliente = (analise.cliente_nome || `cliente_${analise.contato.slice(-4)}`)
-      .toLowerCase()
-      .replace(/\s+/g, '_');
-    element.download = `conversa_${nomeCliente}_${analise.data_conversa_inicio.slice(0, 10)}.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+  async function downloadConversaOriginal() {
+    setBaixando(true);
+    try {
+      const res = await authFetch(`/api/analises/${analise.id}`);
+      if (!res.ok) throw new Error('Falha ao buscar conversa completa');
+      const dataCompleta = await res.json();
+
+      const conteudo = dataCompleta.conversa_original || '';
+      const element = document.createElement('a');
+      const file = new Blob([conteudo], { type: 'text/plain' });
+      element.href = URL.createObjectURL(file);
+      const nomeCliente = (analise.cliente_nome || `cliente_${analise.contato.slice(-4)}`)
+        .toLowerCase()
+        .replace(/\s+/g, '_');
+      element.download = `conversa_${nomeCliente}_${analise.data_conversa_inicio.slice(0, 10)}.txt`;
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+    } catch (error) {
+      console.error('Erro ao baixar conversa:', error);
+      alert('Erro ao baixar a conversa. Tente novamente.');
+    } finally {
+      setBaixando(false);
+    }
   }
 
   async function handleExcluir() {
@@ -80,9 +93,10 @@ export default function AnalisesModal({ analise, onClose, onDeleted, role }: Ana
           <div className="flex items-center gap-3">
             <button
               onClick={downloadConversaOriginal}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+              disabled={baixando}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
             >
-              📥 Baixar conversa (.txt)
+              {baixando ? 'Baixando...' : '📥 Baixar conversa (.txt)'}
             </button>
             {podeExcluir && (
               <button

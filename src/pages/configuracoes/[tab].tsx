@@ -10,13 +10,15 @@ const RECURSOS_NIVEL_2 = [
   { titulo: 'Reanálise automática', descricao: 'Reprocesse conversas antigas com a versão mais recente do prompt.' },
 ];
 
-type TabPrincipal = 'empresas' | 'usuarios' | 'nivel2';
+const ABAS_VALIDAS = ['empresas', 'usuarios', 'nivel2'];
 
 export default function Configuracoes() {
   const router = useRouter();
+  const { tab } = router.query;
   const { perfil, carregando: carregandoAuth } = useAuth();
 
-  const [tabPrincipal, setTabPrincipal] = useState<TabPrincipal>('empresas');
+  const tabPrincipal = typeof tab === 'string' && ABAS_VALIDAS.includes(tab) ? tab : 'empresas';
+
   const [empresas, setEmpresas] = useState<any[]>([]);
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [analises, setAnalises] = useState<any[]>([]);
@@ -68,6 +70,10 @@ export default function Configuracoes() {
       nivel: empresa.nivel || 1,
     });
     setEditandoEmpresa(false);
+  }
+
+  function irParaAba(novaAba: string) {
+    router.push(`/configuracoes/${novaAba}`);
   }
 
   const empresaAtual = empresas.find((e) => e.id === empresaSelecionadaId);
@@ -162,7 +168,7 @@ export default function Configuracoes() {
           ].map((t) => (
             <button
               key={t.id}
-              onClick={() => setTabPrincipal(t.id as TabPrincipal)}
+              onClick={() => irParaAba(t.id)}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
                 tabPrincipal === t.id
                   ? 'text-red-600 border-red-600'

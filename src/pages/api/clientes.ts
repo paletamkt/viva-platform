@@ -2,6 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
 import { verificarAuth, resolverEmpresaFiltro } from '@/lib/serverAuth';
 
+const CAMPOS_LISTA = 'id, contato, cliente_nome, data_conversa_inicio, data_ultima_mensagem, data_upload, analise_json, sentimento_score, sentimento_geral, status, cliente_id';
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -19,7 +21,7 @@ export default async function handler(
     const supabase = getSupabase();
     const empresasFiltro = resolverEmpresaFiltro(perfil, req);
 
-    let query = supabase.from('analises').select('*').order('data_upload', { ascending: false });
+    let query = supabase.from('analises').select(CAMPOS_LISTA).order('data_upload', { ascending: false });
 
     if (empresasFiltro !== null) {
       if (empresasFiltro.length === 0) {

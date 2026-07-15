@@ -12,11 +12,30 @@ export default async function handler(
     return res.status(400).json({ erro: 'ID inválido' });
   }
 
-  if (req.method === 'DELETE') {
-    const perfil = await verificarAuth(req);
-    if (!perfil) {
-      return res.status(401).json({ erro: 'Não autenticado' });
+  const perfil = await verificarAuth(req);
+  if (!perfil) {
+    return res.status(401).json({ erro: 'Não autenticado' });
+  }
+
+  if (req.method === 'GET') {
+    try {
+      const supabase = getSupabase();
+      const { data, error } = await supabase
+        .from('analises')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      return res.status(200).json(data);
+    } catch (error) {
+      console.error('Erro ao buscar análise:', error);
+      return res.status(500).json({ erro: 'Erro ao buscar análise' });
     }
+  }
+
+  if (req.method === 'DELETE') {
     if (perfil.role !== 'master') {
       return res.status(403).json({ erro: 'Apenas Master pode excluir análises' });
     }
