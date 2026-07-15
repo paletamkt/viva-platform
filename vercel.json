@@ -7,15 +7,15 @@
   "env": {
     "NEXT_PUBLIC_SUPABASE_URL": {
       "description": "Supabase Project URL",
-      "required": true
+      "required": false
     },
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": {
       "description": "Supabase Anon Key",
-      "required": true
+      "required": false
     },
     "CLAUDE_API_KEY": {
       "description": "Claude API Key from Anthropic",
-      "required": true
+      "required": false
     }
   },
   "redirects": [
